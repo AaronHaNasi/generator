@@ -5,7 +5,7 @@
 #include <stdlib.h> 
 
 int main(int argc, char** argv) {
-	pid_t process_id; 
+	pid_t *process_id; 
 	int* lower_range; 
 	int* upper_range; 
 	int** fd; 
@@ -28,27 +28,12 @@ int main(int argc, char** argv) {
 
 	}
 	
-	// process_id = (pid_t*)malloc(argc*sizeof(pid_t));
+	process_id = (pid_t*)malloc(argc*sizeof(pid_t));
 
 	for ( int i = 1; i < argc; i++) {
-		process_id = fork(); // fork 		
+		*(process_id+i) = fork(); // fork 		
 	}
 
-	if ( process_id < 0) { // error 
-		perror("Could not create child process"); 
-		free(lower_range);
-		free(upper_range);
-	       	free(fd); 	
-		return -1; 
-	} else if ( process_id == 0) {
-		// child process	
-	} else {
-		// parent process
-		for (int i = 1; i < argc; i++) {
-
-			write(*(*(fd + 1) + i),  
-		}
-	}
 
 	
 	// free(process_id);
