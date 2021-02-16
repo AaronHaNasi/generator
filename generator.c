@@ -29,11 +29,18 @@ int main(int argc, char** argv) {
 	}
 	
 	process_id = (pid_t*)malloc(argc*sizeof(pid_t));
-
+	fd = (int**)malloc(argc*sizeof(int*)); 
 	for ( int i = 1; i < argc; i++) {
-		*(process_id+i) = fork(); // fork 		
+		*(process_id+i) = fork(); // fork
+	        *(fd+i) = (int*)malloc(2*sizeof(int));
+		pipe(*(fd+i));	
 	}
-
+	
+	int children = argc; 
+	
+	while (children > 0) {
+		
+	}	
 
 	
 	// free(process_id);
