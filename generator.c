@@ -1,149 +1,70 @@
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/wait.h> 
 #include <unistd.h>
-#include <stdlib.h>
-#include <errno.h> 
-
-struct range {
-	int lower;
-	int upper; 
-} *ranges; // struct to hold the upper and lower ranges of the numbers 
-
-int getPrimes(int lower, int upper); 
+#include <stdio.h> 
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdlib.h> 
+#include <string.h> 
 
 int main(int argc, char** argv) {
 	
-	printf("%lu\n", sizeof(struct range)); 
-	int processes = (argc - 1) * 2
-	// int fd[2]; 
-	pid_t *process_id; // dynamic array to hold all the process ids 
-	pid_t parent_id = getpid(); 
-	int* parent_write_fd; // for the parent to write to the children 
-       	int* child_write_fd; 	// for the children to write to the parent
-	parent_write_fd = (int*)malloc((2*argc)*sizeof(int)); 
-	child_write_fd = (int*)malloc((2*argc)*sizeof(int)); 
-	// parent_write_fd = (int**)malloc(argc*sizeof(int*)); 
-	// child_write_fd = (int**)malloc(argc*sizeof(int*)); 
-//	ranges = (struct range*)malloc(argc*sizeof(struct range));  // allocate space for each range 
-	
-	for ( int i = 1; i < argc; i++) {
-//		(ranges+i)->lower = atoi(strtok(argv[i], ":")); // place lower range into struct 
-//	       	(ranges+i)->upper = atoi(strtok(NULL, ":"));  // place upper range into struct
-		// *(parent_write_fd+i) = (int*)malloc(2*sizeof(int)); // create pipe for parent to write to child 
-		// *(child_write_fd+i) = (int*)malloc(2*sizeof(int)); // create pipe for child to write to parent
-		// *(child_write_fd+i)[0] = malloc(sizeof(int));
-	       	//*(parent_write_fd+i)[1] = malloc(sizeof(int)); 
-		// parent_write_fd++;
-	       	// child_write_fd++; 	
-	       	/*if( pipe(*(parent_write_fd+(i-1))) < 0) {
-			perror("Pipe creation failed"); 	
-		} // pipe system call for parent to child 
-		if( pipe(*(child_write_fd+(i-1))) < 0) {
+	int number_of_processes = argc - 1;
+	int number_of_pipes = 2 * number_of_processes; 
+	pid_t* process_id = malloc(number_of_processes*sizeof(pid_t));
+       	int* child_fd = malloc(number_of_pipes*sizeof(int)); 
+	int* parent_fd = malloc(number_of_pipes*sizeof(int)); 
 
-			perror("PIpe creation failed"); 	
-		}; // pipe system call for child to parent */  
-			
-	/*	if ( (ranges+i)->lower >= (ranges+i)->upper) { // if the lower range is larger than the upper range, then the program will throw an error
-			free(ranges); 
-		       	free(process_id); 	
-			free(parent_write_fd);
-			free(child_write_fd);	
-			perror("LowerRange:UpperRange, Lower range must be smaller than Upper Range!"); 
+	for ( int i = 0; i < argc-1; i++ ) {
+		int lower_num, upper_num;
+		lower_num = atoi(strtok(argv[i+1], ":"));
+		upper_num = atoi(strtok(NULL, ":")); 
+		if ( lower_num > upper_num ) {
+			free(process_id); 
+			free(child_fd); 
+			free(parent_fd); 
+			perror("Lower range must be less than Upper range! Exiting\n"); 
 			return -1; 
-		}*/
-		pipe(parent_write_fd+(i*2));
-	       	pipe(parent_write_fd+(i*2)); 	
-	}
-		
-
-	process_id = (pid_t*)malloc(argc*sizeof(pid_t)); // allocating space for all fork process ids
-	
-	// fd = (int**)malloc(argc*sizeof(int*)); 
-	// pipe(fd); 
-	for ( int i = 1; i < argc; i++) {
-		 //pipe(parent_write_fd[i]); 
-		 //pipe(child_write_fd[i]); 
-		*(process_id+i) = fork(); // fork
-	        // *(fd+i) = (int*)malloc(2*sizeof(int)); 
-		// pipe(*(fd+i));i	
-	}
-	
-	// int children = argc; 
-	// children go here 
-	for ( int i = 1; i < argc; i++) {
-		if(*(process_id+i) == 0) { // child 
-			char *num_ranges; 
-			//sleep(10);
-			// struct range *current_range; 
-			// close(*(*(parent_write_fd+1)+i)); // closing write end of pipe, using different pipe to write to parent 
-			//close(parent_write_fd[i][1]); 	
-			//read(*(*(parent_write_fd)+i), current_range, sizeof(struct range)); 
-			printf("CHILD\n"); 
-		       		
-			int len = read(parent_write_fd[i], num_ranges, sizeof(argv[i]));
-			// int len = read(fd[0], num_ranges, sizeof(argv[i])); 
-			int lower = atoi(strtok(num_ranges, ":"));
-		       	int upper = atoi(strtok(NULL, ":")); 	
-			printf("%i", errno); 
-			printf("%i\n", len);  
-			num_ranges[len] = 0; 
-			printf("CHILD!\n"); 
-			printf("%s", num_ranges); 
-		       	// printf("Lower: %d, Upper: %d", current_range->lower, current_range->upper); 	
-			int numberOfPrimes = getPrimes(lower, upper); 
-			// printf("%d\n", numberOfPrimes);
-		       	printf("I'm a child!\n");	
-			
-			return 0; 
-		       		
 		}
+		pipe(parent_fd+(i*2)); 
+		pipe(child_fd+(i*2)); 
+	}
+
+	for ( int i = 0; i < number_of_processes; ++i) {
+		*(process_id+i) = fork(); 
+	}
+
+	for ( int i = 0; i < number_of_processes; i++) {
+		if (*(process_id+i) == 0) {
+			int from_parent_fd[2] = ; 
+			printf("Child\n");
+			char* total_range; 
+			if ( i % 2) {
+
+				// close(parent_fd[i+1]); 
+				read(from_parent_fd[0], &total_range, sizeof(char*));
+			      	printf("%s", total_range); 	
+			} else {
+
+			}
+		       	exit(0);	
+		}
+	}
+
+	printf("Parent\n");
+	for ( int i = 0; i < number_of_processes; i++) {
+		if ( !(i % 2) ) { 
+			// close(*(parent_fd+i));
+			write(parent_fd[i+1], argv[i+1], sizeof(argv[i+1])); 
+		} else { 
+			//close(*(parent_fd+i+1)); 
+		}
+	}
+	
+	int status; 
+	pid_t pid; 
+	while (number_of_processes > 0) {
+		pid = wait(&status); 
+		printf("%d exited\n", pid); 
+		number_of_processes--; 
 	}	
 	
-	// Parent should start here
-	printf("parent\n"); // TODO take out 
-	for (int i = 1; i < argc; i++) {
-	//	struct range *current_range = NULL;
-	       		
-	//	current_range = &(ranges[i]); 
-		close(parent_write_fd[i-1]); // close read end of pipe, using different pipe to get information from child
-		write(parent_write_fd[i], &argv[i], sizeof(argv[i]));
-		// write(fd[1], argv[i], sizeof(argv[i])); 
-	}
-
-	 
-	wait(NULL);
-	free(ranges); 
-       	free(process_id); 	
-	free(parent_write_fd);
-	free(child_write_fd);	
-
-	return 0; 
 }
-
-int getPrimes(int lower, int upper) {
-	int numberOfPrimes = 0;
-	
-	for( int i = lower; i <= upper; i++) {
-		if ( i == 1 || i == 0 )
-		       continue; 
-		
-		int isPrime = 1;
-
-		for (int j = 2; j <= i / 2; ++j)  {
-			if ( i % j == 0 ) {
-				isPrime = 0; 
-				break; 
-			}
-		}
-		if (isPrime == 1) {
-			numberOfPrimes++; 
-		}	
-
-	}
-
-	return numberOfPrimes;
-}
-
-// primes: url TODO 
