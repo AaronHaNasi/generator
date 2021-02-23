@@ -54,35 +54,53 @@ int main(int argc, char** argv) {
 	// children
 	for ( int i = 0; i < number_of_processes; i++) {
 		if (*(process_id+i) == 0) {
-			// printf("Child\n");
-			close(fd[i].parent_fd[1]); 
-			close(fd[i].child_fd[0]); 
-			struct range_struct* range;	
+			int *return_total; // pointer to return the total number of primes
+			close(fd[i].parent_fd[1]); // not needed
+			close(fd[i].child_fd[0]);  // not needed
+			// struct pointer to recieve struct 
+			struct range_struct* range = malloc(sizeof(struct range_struct)); 	
 			read(fd[i].parent_fd[0], range, sizeof(struct range_struct)); 
-			// printf("Lower range: %d\nUpper range: %d\n", range->lower, range->upper); 
-			int nbrOfPrimes = getNumberOfPrimes( range->lower, range->lower); 
-			// printf("done"); 
+			// pass values to function to get total number of primes
+			int nbrOfPrimes = getNumberOfPrimes( range->lower, range->upper); 
 			printf("Child %d generates %d primes in [%d:%d]\n", getpid(), nbrOfPrimes, range->lower, range->upper); 
-			write(fd[i].child_fd[1], &nbrOfPrimes, 8);  	
-		       	exit(0);	
+			// pass to pointer
+			return_total = &nbrOfPrimes;
+			//return value to parent 
+			write(fd[i].child_fd[1], return_total, 8);
+			// exit child 
+			exit(0);	
 		}
 	}
 	// parent 
-	printf("Parent\n");
+	int total_primes = 0;
+       	int* prime_return = malloc(sizeof(int));	
 	for ( int i = 0; i < number_of_processes; i++) {
-		close(fd[i].parent_fd[0]);
-		struct range_struct* to_pass = &ranges[i]; 
-		write(fd[i].parent_fd[1], to_pass, sizeof(struct range_struct));  
+		close(fd[i].parent_fd[0]); // not needed
+		close(fd[i].child_fd[1]); // not needed
+		struct range_struct* to_pass = &ranges[i];  
+		write(fd[i].parent_fd[1], to_pass, sizeof(struct range_struct)); // pass range to each child  
 	}
 	
-	int status; 
+	int status;
+       	int total_processes = number_of_processes; // to check in for loop	
 	pid_t pid; 
-	while (number_of_processes > 0) {
-		pid = wait(&status); 
-		printf("%d exited\n", pid); 
+	while (number_of_processes > 0) { // continue running until there are no children 
+		pid = wait(&status); // wait for process to end 
+	       	for( int i = 0; i <= total_processes; i++ ) {
+			if (pid == process_id[i]) { // read from child process that ended
+				read(fd[i].child_fd[0], prime_return, 8);
+			       	total_primes += *prime_return; 	// ad to total 
+			}
+		}	
 		number_of_processes--; 
-	}	
-	
+	}
+
+	printf("\nTotal number of Primes: %i\n", total_primes);	
+	free(fd); 
+	free(process_id);
+	free(ranges);
+	free(prime_return); 
+	return 0; 	
 }
 // get the total number of primes and return that value 
 int getNumberOfPrimes(int lower, int upper) {
